@@ -32,22 +32,22 @@ class SimpleClass {
 }
 
 extension AnnotationFinder on dynamic {
-  ClassMirror get mirror => reflect(this).type;
+  ClassMirror get _mirror => reflect(this).type;
 
   T? getAnnotation<T>(String name, [AnnotationType type = AnnotationType.cls]) {
     switch (type) {
       case AnnotationType.cls:
-        return annotations[name];
+        return _annotations[name];
       case AnnotationType.field:
-        return annotationsFromFields["Symbol(\"$name\")"];
+        return _annotationsFromFields[name];
       case AnnotationType.method:
-        return annotationsFromMethods["Symbol(\"$name\")"];
+        return _annotationsFromMethods[name];
     }
   }
 
-  Map<String, dynamic> get annotations {
+  Map<String, dynamic> get _annotations {
     Map<String, dynamic> map = {};
-    for (var e in mirror.metadata) {
+    for (var e in _mirror.metadata) {
       final value = e.reflectee;
       final key = e.reflectee.runtimeType.toString();
       map[key] = value;
@@ -55,25 +55,25 @@ extension AnnotationFinder on dynamic {
     return map;
   }
 
-  Map<String, dynamic> get annotationsFromFields {
+  Map<String, dynamic> get _annotationsFromFields {
     Map<String, dynamic> map = {};
-    for (var v in mirror.declarations.values) {
+    for (var v in _mirror.declarations.values) {
       if (v is VariableMirror) {
-        final key = v.simpleName;
+        final key = MirrorSystem.getName(v.simpleName);
         final data = v.metadata.last.reflectee;
-        map["$key"] = data;
+        map[key] = data;
       }
     }
     return map;
   }
 
-  Map<String, dynamic> get annotationsFromMethods {
+  Map<String, dynamic> get _annotationsFromMethods {
     Map<String, dynamic> map = {};
-    for (var v in mirror.declarations.values) {
+    for (var v in _mirror.declarations.values) {
       if (v is MethodMirror) {
-        final key = v.simpleName;
+        final key = MirrorSystem.getName(v.simpleName);
         final data = v.metadata.last.reflectee;
-        map["$key"] = data;
+        map[key] = data;
       }
     }
     return map;
