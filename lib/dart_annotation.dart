@@ -1,17 +1,5 @@
 import 'dart:mirrors';
 
-class DartAnnotation {
-  void run() {
-    final example = SimpleClass();
-    final todo =
-        example.getAnnotation<TodoAnnotation>("TodoAnnotation", AnnotationType.cls);
-    if (todo != null) {
-      print(todo.name);
-      print(todo.description);
-    }
-  }
-}
-
 class TodoAnnotation {
   final String name;
   final String description;
@@ -34,14 +22,27 @@ class SimpleClass {
 extension AnnotationFinder on dynamic {
   ClassMirror get _mirror => reflect(this).type;
 
-  T? getAnnotation<T>(String name, [AnnotationType type = AnnotationType.cls]) {
-    switch (type) {
-      case AnnotationType.cls:
-        return _annotations[name];
-      case AnnotationType.field:
-        return _annotationsFromFields[name];
-      case AnnotationType.method:
-        return _annotationsFromMethods[name];
+  T getAnnotation<T>() {
+    try {
+      return _annotations["$T"];
+    } catch (_) {
+      return _mirror.newInstance(Symbol(""), []).reflectee;
+    }
+  }
+
+  T getAnnotationFromField<T>(String field) {
+    try {
+      return _annotationsFromFields[field]?["$T"];
+    } catch (_) {
+      return _mirror.newInstance(Symbol(""), []).reflectee;
+    }
+  }
+
+  T getAnnotationFromMethod<T>(String field) {
+    try {
+      return _annotationsFromMethods[field]?["$T"];
+    } catch (_) {
+      return _mirror.newInstance(Symbol(""), []).reflectee;
     }
   }
 
@@ -55,28 +56,38 @@ extension AnnotationFinder on dynamic {
     return map;
   }
 
-  Map<String, dynamic> get _annotationsFromFields {
-    Map<String, dynamic> map = {};
-    for (var v in _mirror.declarations.values) {
-      if (v is VariableMirror) {
-        final key = MirrorSystem.getName(v.simpleName);
-        final data = v.metadata.last.reflectee;
-        map[key] = data;
+  Map<String, Map<String, dynamic>> get _annotationsFromFields {
+    Map<String, Map<String, dynamic>> parentMap = {};
+    for (var parent in _mirror.declarations.values) {
+      if (parent is VariableMirror) {
+        final parentKey = MirrorSystem.getName(parent.simpleName);
+        Map<String, dynamic> childMap = {};
+        for (var child in parent.metadata) {
+          final childValue = child.reflectee;
+          final childKey = child.reflectee.runtimeType.toString();
+          childMap[childKey] = childValue;
+        }
+        parentMap[parentKey] = childMap;
       }
     }
-    return map;
+    return parentMap;
   }
 
-  Map<String, dynamic> get _annotationsFromMethods {
-    Map<String, dynamic> map = {};
-    for (var v in _mirror.declarations.values) {
-      if (v is MethodMirror) {
-        final key = MirrorSystem.getName(v.simpleName);
-        final data = v.metadata.last.reflectee;
-        map[key] = data;
+  Map<String, Map<String, dynamic>> get _annotationsFromMethods {
+    Map<String, Map<String, dynamic>> parentMap = {};
+    for (var parent in _mirror.declarations.values) {
+      if (parent is MethodMirror) {
+        final parentKey = MirrorSystem.getName(parent.simpleName);
+        Map<String, dynamic> childMap = {};
+        for (var child in parent.metadata) {
+          final childValue = child.reflectee;
+          final childKey = child.reflectee.runtimeType.toString();
+          childMap[childKey] = childValue;
+        }
+        parentMap[parentKey] = childMap;
       }
     }
-    return map;
+    return parentMap;
   }
 }
 
