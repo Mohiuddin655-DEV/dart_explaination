@@ -2,62 +2,86 @@ import 'dart:mirrors';
 
 class DartAnnotation {
   void run() {
-    MyClass myClass = MyClass();
-    InstanceMirror im = reflect(myClass);
-    ClassMirror classMirror = im.type;
-
-    classifiedAnnotationData(classMirror);
-    declarationsAnnotationData(classMirror);
-  }
-
-  void classifiedAnnotationData(ClassMirror classMirror) {
-    for (var metadata in classMirror.metadata) {
-      final data = metadata.reflectee;
-      final annotation = data.runtimeType;
-
-      if (data is Todo) {
-        final name = data.name;
-        final description = data.description;
-        print(
-            "This is class annotation data \t\t\t: $annotation {$name, $description}");
-      }
-    }
-  }
-
-  void declarationsAnnotationData(ClassMirror classMirror) {
-    for (var v in classMirror.declarations.values) {
-      if (v.metadata.isNotEmpty) {
-        final data = v.metadata.first.reflectee;
-        final annotation = data.runtimeType;
-
-        if (data is Todo) {
-          final name = data.name;
-          final description = data.description;
-          print(
-              "This is declarations annotation data \t: $annotation {$name, $description}");
-        }
-      }
+    final example = SimpleClass();
+    final todo =
+        example.getAnnotation<TodoAnnotation>("TodoAnnotation", AnnotationType.cls);
+    if (todo != null) {
+      print(todo.name);
+      print(todo.description);
     }
   }
 }
 
-class Todo {
+class TodoAnnotation {
   final String name;
   final String description;
 
-  const Todo(this.name, this.description);
+  const TodoAnnotation([this.name = "", this.description = ""]);
 }
 
-@Todo('Chiba', 'Rename class')
-class MyClass {
-  @Todo('Waisted', 'Change field type')
+@TodoAnnotation('This is an annotation class')
+class SimpleClass {
+  @TodoAnnotation('This is an annotation field')
   int? value;
 
-  @Todo('Anyone', 'Change format')
-  void printValue() {
-    print('value: $value');
+  @TodoAnnotation('This is an annotation method')
+  void call() {}
+
+  @TodoAnnotation('This is an annotation constructor')
+  SimpleClass();
+}
+
+extension AnnotationFinder on dynamic {
+  ClassMirror get mirror => reflect(this).type;
+
+  T? getAnnotation<T>(String name, [AnnotationType type = AnnotationType.cls]) {
+    switch (type) {
+      case AnnotationType.cls:
+        return annotations[name];
+      case AnnotationType.field:
+        return annotationsFromFields["Symbol(\"$name\")"];
+      case AnnotationType.method:
+        return annotationsFromMethods["Symbol(\"$name\")"];
+    }
   }
 
-  @Todo('Anyone', 'Remove this')
-  MyClass();
+  Map<String, dynamic> get annotations {
+    Map<String, dynamic> map = {};
+    for (var e in mirror.metadata) {
+      final value = e.reflectee;
+      final key = e.reflectee.runtimeType.toString();
+      map[key] = value;
+    }
+    return map;
+  }
+
+  Map<String, dynamic> get annotationsFromFields {
+    Map<String, dynamic> map = {};
+    for (var v in mirror.declarations.values) {
+      if (v is VariableMirror) {
+        final key = v.simpleName;
+        final data = v.metadata.last.reflectee;
+        map["$key"] = data;
+      }
+    }
+    return map;
+  }
+
+  Map<String, dynamic> get annotationsFromMethods {
+    Map<String, dynamic> map = {};
+    for (var v in mirror.declarations.values) {
+      if (v is MethodMirror) {
+        final key = v.simpleName;
+        final data = v.metadata.last.reflectee;
+        map["$key"] = data;
+      }
+    }
+    return map;
+  }
+}
+
+enum AnnotationType {
+  cls,
+  field,
+  method,
 }
