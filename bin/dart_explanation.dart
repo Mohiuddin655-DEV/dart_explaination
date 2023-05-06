@@ -1,7 +1,6 @@
 import 'package:dart_explanation/dart_class.dart';
 
 void main(List<String> arguments) {
-
   var tester = Tester(); // Create a new tester class
 
   tester.sayHello(); // Simple method call
@@ -10,4 +9,10 @@ void main(List<String> arguments) {
 
   var message = tester.getMessage(); // Return type method call
   print(message); // print returnable data
+
+  // Mappable parameterized method call
+  tester.sayHelloCustom(
+    title: "Message",
+    message2: "This is a optional",
+  );
 }
