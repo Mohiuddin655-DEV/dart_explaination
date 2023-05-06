@@ -1,11 +1,6 @@
-
-
-import 'package:dart_explanation/dart_variable.dart';
+import 'package:dart_explanation/dart_annotation.dart';
 
 void main(List<String> arguments) {
-
-  final tester = VariableTester();
+  final tester = DartAnnotation();
   tester.run();
-
 }
-
