@@ -10,7 +10,7 @@ class TodoAnnotation {
 @TodoAnnotation('This is an annotation class')
 class SimpleClass {
   @TodoAnnotation('This is an annotation field')
-  int? value;
+  String? value = "This is class value!";
 
   @TodoAnnotation('This is an annotation method')
   void call() {}
@@ -22,11 +22,13 @@ class SimpleClass {
 extension AnnotationFinder on dynamic {
   ClassMirror get _mirror => reflect(this).type;
 
+  T instanceOf<T>() => reflectClass(T).newInstance(Symbol(""), []).reflectee;
+
   T getAnnotation<T>() {
     try {
       return _annotations["$T"];
     } catch (_) {
-      return _mirror.newInstance(Symbol(""), []).reflectee;
+      return instanceOf<T>();
     }
   }
 
@@ -34,15 +36,15 @@ extension AnnotationFinder on dynamic {
     try {
       return _annotationsFromFields[field]?["$T"];
     } catch (_) {
-      return _mirror.newInstance(Symbol(""), []).reflectee;
+      return instanceOf<T>();
     }
   }
 
-  T getAnnotationFromMethod<T>(String field) {
+  T getAnnotationFromMethod<T>(String method) {
     try {
-      return _annotationsFromMethods[field]?["$T"];
+      return _annotationsFromMethods[method]?["$T"];
     } catch (_) {
-      return _mirror.newInstance(Symbol(""), []).reflectee;
+      return instanceOf<T>();
     }
   }
 
